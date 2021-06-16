@@ -1,25 +1,34 @@
 import com.sun.org.apache.bcel.internal.classfile.ClassParser;
 import com.sun.org.apache.bcel.internal.classfile.JavaClass;
 import com.sun.org.apache.bcel.internal.classfile.Utility;
-import com.sun.org.apache.bcel.internal.util.ClassLoader;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.zip.GZIPOutputStream;
 
 
-public class BCELcoder {
-    public static void encode(String classFilePath) {
+public class BcelCode {
+    public static byte[] gzip(byte[] bytes) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        GZIPOutputStream gos = new GZIPOutputStream(baos);
+        gos.write(bytes, 0, bytes.length);
+        gos.close();
+        baos.close();
+        return baos.toByteArray();
+    }
+
+    public static void encode(String classFilePath) throws Exception {
         try {
             Path path = Paths.get(classFilePath);
             byte[] bytes = Files.readAllBytes(path);
-            String result = Utility.encode(bytes, true);
+            String result = Utility.encode(gzip(bytes), false);
             System.out.println("$$BCEL$$" + result);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void decode(String body) {
+    public static void decode(String body) throws Exception {
         try {
             byte[] bytes = Utility.decode(body, true);
             ClassParser parser = new ClassParser(new ByteArrayInputStream(bytes), "foo");
@@ -35,17 +44,11 @@ public class BCELcoder {
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            new com.sun.org.apache.bcel.internal.util.ClassLoader();
-        } catch (NoClassDefFoundError e) {
-            System.out.println("[-] Run Me With JAVA Before 8u251, You JAVA Is " + System.getProperty("java.version"));
-            return;
-        }
-        if (args.length == 0) {
+    public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
             System.out.println("[*] Usage:");
-            System.out.println("      java -jar BcelCoder.jar <encode> C:/test.class");
-            System.out.println("      java -jar BcelCoder.jar <decode> $$BCEL$$...");
+            System.out.println("java -jar BcelCode.jar encode test.class");
+            System.out.println("java -jar BcelCode.jar decode \"$$BCEL$$abcde\"");
             return;
         }
         String type = args[0];
