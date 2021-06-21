@@ -1,7 +1,5 @@
 Conversion between Java class file and BCEL code
 
-Tested on java 1.8
-
 **encode**
 
 ```
